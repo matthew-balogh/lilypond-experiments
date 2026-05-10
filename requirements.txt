@@ -1,0 +1,13 @@
+pandas
+numpy
+scikit-learn
+matplotlib
+plotly
+minisom
+scipy
+ucimlrepo
+
+ipykernel
+jupyter
+
+git+https://github.com/matthew-balogh/lilypond
