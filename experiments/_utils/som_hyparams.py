@@ -25,22 +25,14 @@ def calc_recommended_side_length_ratio(X):
 def calc_recommended_grid_size(X):
 	M = calc_recommended_grid_size_in_total(X)
 	ratio = calc_recommended_side_length_ratio(X)
-	height = int(np.round(np.sqrt(M / ratio)))
-	width = int(np.round(ratio * height))
+	height = int(np.ceil(np.sqrt(M / ratio)))
+	width = int(np.ceil(ratio * height))
 	return height, width
 
 def calc_initial_sigma(d1, d2, factor=3.0):
-    """
-    Calculates initial sigma using a log dampener.
-    Retains L/4 ratio for small maps, but reduces it for large maps.
-    """
     L = max(d1, d2)
     if L <= 1: return 1.0
-
-    # Formula: L / (4 * log10(L))
-    # For L=10, denominator is 4 (result: L/4)
-    # For L=100, denominator is 8 (result: L/8)
-    return np.round(L / (factor * np.log10(L)), 2)
+    return np.round(L / factor, 2)
 
 def obtain_som_hyparams(X, verb=True):
     total = calc_recommended_grid_size_in_total(X)
@@ -51,9 +43,6 @@ def obtain_som_hyparams(X, verb=True):
 
     som_dim_1 = height
     som_dim_2 = width
-
-    som_dim_1 = som_dim_1 if som_dim_1 % 2 == 0 else (som_dim_1 + 1)
-    som_dim_2 = som_dim_2 if som_dim_2 % 2 == 0 else (som_dim_2 + 1)
 
     som_sigma = calc_initial_sigma(som_dim_1, som_dim_2)
 

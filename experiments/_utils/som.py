@@ -18,17 +18,21 @@ def train_som(X, d1, d2, sigma, topology, learning_rate, num_iteration,
 	som.train(X, num_iteration=num_iteration, random_order=random_order, use_epochs=use_epochs, verbose=verb)
 
 	if verb:
-		QE, TE = calc_som_main_qualities(som, X)
+		QE, TE, QE_ROUNDED, TE_ROUNDED = calc_som_main_qualities(som, X)
 		print("\nBrief quality of SOM:")
 		print(f"Quantization error:\t{QE}")
 		print(f"Topographic error:\t{TE}")
+		print(f"Quantization error (rounded):\t{QE_ROUNDED}")
+		print(f"Topographic error (rounded):\t{TE_ROUNDED}")
 
 	return som
 
 def calc_som_main_qualities(som:MiniSom, X, digits=3):
-	QE = np.round(som.quantization_error(X), digits)
-	TE = np.round(som.topographic_error(X), digits)
-	return QE, TE
+	QE = som.quantization_error(X)
+	TE = som.topographic_error(X)
+	QE_ROUNDED = np.round(QE, digits)
+	TE_ROUNDED = np.round(TE, digits)
+	return QE, TE, QE_ROUNDED, TE_ROUNDED
 
 def place_node_edges_via_weights(node_weights, alpha=.3, linewidth=1.5, ax=None):
 	if ax is None:
