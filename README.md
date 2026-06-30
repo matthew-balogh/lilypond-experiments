@@ -1,2 +1,2 @@
-# lilypond-experiments
-Experiments related to Lilypond
+# Lilypond experiments repository
+
