@@ -2,4 +2,6 @@
 .DS_Store
 __pycache__
 _exports*
-_archived
+_archived*
+
+!experiments/_exports

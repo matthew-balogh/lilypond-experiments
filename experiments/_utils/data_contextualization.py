@@ -47,6 +47,6 @@ def __load_prepare_data(random_seed=RANDOM_SEED):
     data, target = __load_dataset()
     return __prepare_data(data, target, random_seed=random_seed)
 
-DATASET_NAMES = ["cardio"]
+DATASET_NAMES = ["Cardio"]
 DATASET_GETTERS = lambda random_seed: map(lambda x: (lambda: __load_prepare_data(random_seed=random_seed)), DATASET_NAMES)
 DATASET_GETTERS_FULL = map(lambda x: (lambda: __load_dataset()), DATASET_NAMES)
