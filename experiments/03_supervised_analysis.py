@@ -13,9 +13,10 @@ os.makedirs(EXPORTS_DIR, exist_ok=True)
 DATASET_IDS = ["53_iris", "42_glass", "73_mushroom"]
 DATASET_NAMES = ["Iris", "Glass", "Mushroom"]
 GAPS = [0.225, 0.25, 0.26]
+EPOCHS = [17, 16, 19]
 VERB = True
 
-for i, (dataset_id, gap) in enumerate(zip(DATASET_IDS, GAPS)):
+for i, (dataset_id, gap, epoch) in enumerate(zip(DATASET_IDS, GAPS, EPOCHS)):
     print(f"\n\n{i+1}. Dataset ID: {dataset_id}")
 
 
@@ -71,6 +72,7 @@ for i, (dataset_id, gap) in enumerate(zip(DATASET_IDS, GAPS)):
     from _utils.som_hyparams import obtain_som_hyparams
 
     hyparams = obtain_som_hyparams(X_scaled, verb=VERB)
+    hyparams["num_iteration"] = epoch
     embedding = SOM_Embedding(**hyparams, verb=VERB) \
         .fit(X_scaled)
     som = embedding.som_
@@ -99,7 +101,7 @@ for i, (dataset_id, gap) in enumerate(zip(DATASET_IDS, GAPS)):
         "label": dataset_name,
         "zorder": 21,
         "marker": "^",
-        "size_base": 10 if dataset_id == 73 else 25,
+        "size_base": 150 if dataset_id == 73 else 300,
         "opacity": .95,
         "subsample_ratio": None,
     }
@@ -112,7 +114,19 @@ for i, (dataset_id, gap) in enumerate(zip(DATASET_IDS, GAPS)):
         "linewidth": .1 if dataset_id == "73_mushroom" else 2.5,
     }
 
-    fig, (ax0, ax1) = plt.subplots(1, 2, figsize=figsize);
+    figsize = (10, 11)
+    fig, ax0 = plt.subplots(1, 1, figsize=figsize);
+
+    pad_style = {
+        **pad_style,
+        "gap": gap * 1.05,
+    }
+
+    rhizome_style = {
+        **rhizome_style,
+        "opacity": .8,
+        "linewidth": .3 if dataset_id == "73_mushroom" else 7,
+    }
 
     basin.pond() \
         .set_coloring_strategy(coloring_strategy) \
@@ -124,23 +138,10 @@ for i, (dataset_id, gap) in enumerate(zip(DATASET_IDS, GAPS)):
         .see_rhizome(mode="all", ax=ax0) \
 	    .attract(X_scaled, **attract_style) \
         .observe(return_fig=True, ax=ax0, title="All BMU pairs");
-    
-    basin.pond() \
-        .set_coloring_strategy(coloring_strategy) \
-        .flood(below_activations=0) \
-        .style_pad(**pad_style) \
-        .style_petal(hide=True) \
-        .style_flood(underwater_opacity=.4) \
-        .style_rhizome(**rhizome_style) \
-        .see_rhizome(mode="violating", ax=ax1) \
-	    .attract(X_scaled, **attract_style) \
-        .observe(return_fig=True, ax=ax1, title="Violating BMU pairs");
-    
-    for ax in (ax0, ax1):
-        ax.set_aspect('equal')
-        ax.axis("off")
 
-    plt.suptitle("Rhizome layer denoting edges between $1st$ and $2nd$ BMUs of the data points")
+    ax0.set_aspect('equal')
+    ax0.axis("off")
+
     plt.tight_layout()
 
     # export fig

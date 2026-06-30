@@ -13,9 +13,10 @@ os.makedirs(EXPORTS_DIR, exist_ok=True)
 DATASET_IDS = ["53_iris", "42_glass", "73_mushroom"]
 DATASET_NAMES = ["Iris", "Glass", "Mushroom"]
 GAPS = [0.225, 0.25, 0.26]
+EPOCHS = [17, 16, 19]
 VERB = True
 
-for i, (dataset_id, gap) in enumerate(zip(DATASET_IDS, GAPS)):
+for i, (dataset_id, gap, epoch) in enumerate(zip(DATASET_IDS, GAPS, EPOCHS)):
     print(f"\n\n{i+1}. Dataset ID: {dataset_id}")
 
 
@@ -56,6 +57,7 @@ for i, (dataset_id, gap) in enumerate(zip(DATASET_IDS, GAPS)):
     from _utils.som_hyparams import obtain_som_hyparams
 
     hyparams = obtain_som_hyparams(X_scaled, verb=VERB)
+    hyparams["num_iteration"] = epoch
     embedding = SOM_Embedding(**hyparams, verb=VERB) \
         .fit(X_scaled)
     som = embedding.som_
@@ -64,7 +66,7 @@ for i, (dataset_id, gap) in enumerate(zip(DATASET_IDS, GAPS)):
     # test convergence
 
     from _utils.som import plot_som_convergence_over_epochs
-    MQEs, TEs = plot_som_convergence_over_epochs(X_scaled, epoch_min=1, epoch_max=hyparams["num_iteration"], step=1, show_fig=False, verb=VERB, **hyparams)
+    MQEs, TEs = plot_som_convergence_over_epochs(X_scaled, epoch_min=1, epoch_max=2, step=1, show_fig=False, verb=VERB, **hyparams)
     print("MQE over epochs:", np.round(MQEs, 3))
 
 
@@ -76,7 +78,8 @@ for i, (dataset_id, gap) in enumerate(zip(DATASET_IDS, GAPS)):
     basin = Basin(som, X_scaled, random_seed=RANDOM_SEED) \
         .prepare()
 
-    fig, _ = basin.legacy_pond().visualize(hold_on=True);
+    figsize = (9, 4)
+    fig, _ = basin.legacy_pond().visualize(figsize=figsize, hold_on=True);
 
     ## export fig
     export_figure(fig, EXPORTS_DIR, f"02_{dataset_name}_lilypond_00.png")
@@ -119,6 +122,9 @@ for i, (dataset_id, gap) in enumerate(zip(DATASET_IDS, GAPS)):
     # export fig
     export_figure(fig, EXPORTS_DIR, f"02_{dataset_name}_lilypond_01.png")
 
+    fig.delaxes(ax0)
+    # export fig
+    export_figure(fig, EXPORTS_DIR, f"02_{dataset_name}_lilypond_01_simple.png")
 
     fig, (ax0, ax1) = plt.subplots(1, 2, figsize=figsize);
 
@@ -159,3 +165,41 @@ for i, (dataset_id, gap) in enumerate(zip(DATASET_IDS, GAPS)):
 
     # export fig
     export_figure(fig, EXPORTS_DIR, f"02_{dataset_name}_lilypond_02.png")
+
+    fig, ax0 = plt.subplots(1, 1, figsize=figsize);
+
+    pad_style = {
+        **pad_style,
+        "gap": gap * 1.125,
+        "cmap": "RdYlGn_r"
+    }
+
+    rhizome_style = {
+        **rhizome_style,
+        "opacity": .8,
+        "linewidth": .2 if dataset_id == "73_mushroom" else 5,
+    }
+
+    basin.pond() \
+        .set_coloring_strategy(coloring_strategy) \
+        .flood(below_activations=0) \
+        .style_pad(**pad_style) \
+        .style_petal(hide=True) \
+        .style_flood(underwater_opacity=.4) \
+        .style_rhizome(**rhizome_style) \
+        .see_rhizome(mode="all", ax=ax0) \
+        .observe(return_fig=True, ax=ax0, title="All BMU pairs");
+
+    ax0.set_aspect('equal')
+    ax0.axis("off")
+
+    plt.tight_layout()
+
+    # export fig
+    export_figure(fig, EXPORTS_DIR, f"02_{dataset_name}_lilypond_03.png")
+
+
+    # export basin
+    import pickle
+    pickle.dump(basin, open(f"{BASE_DIR}/experiments/_exports/basin_{dataset_name}.pkl", "wb"))
+

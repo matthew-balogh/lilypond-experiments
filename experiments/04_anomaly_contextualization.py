@@ -35,6 +35,7 @@ for i, (dataset_name, dataset_getter) in enumerate(zip(DATASET_NAMES, DATASET_GE
     from _utils.som_hyparams import obtain_som_hyparams
 
     hyparams = obtain_som_hyparams(Xs_hist_normal, verb=VERB)
+    hyparams["num_iteration"] = 19
     embedding = SOM_Embedding(**hyparams, verb=VERB) \
         .fit(Xs_hist_normal)
     som = embedding.som_
@@ -44,8 +45,6 @@ for i, (dataset_name, dataset_getter) in enumerate(zip(DATASET_NAMES, DATASET_GE
 
     from _utils.som import plot_som_convergence_over_epochs
     MQEs, TEs = plot_som_convergence_over_epochs(Xs_hist_normal, epoch_min=1, epoch_max=2, step=1, show_fig=False, verb=VERB, **hyparams)
-    print("MQE over epochs:", np.round(MQEs, 3))
-    MQEs, TEs = plot_som_convergence_over_epochs(Xs_hist_normal, epoch_min=19, epoch_max=20, step=1, show_fig=False, verb=VERB, **hyparams)
     print("MQE over epochs:", np.round(MQEs, 3))
 
 
@@ -66,11 +65,15 @@ for i, (dataset_name, dataset_getter) in enumerate(zip(DATASET_NAMES, DATASET_GE
         .prepare()
 
     coloring_strategy = "distance_map"
-    gap = .24
+    gap = .2
+
+    from matplotlib.colors import LinearSegmentedColormap
+    gentle_binary_cmap = LinearSegmentedColormap.from_list("gentle_binary", ["#ffffff", "#6F6F6F"])
 
     pad_style = {
         "marker": "s",
         "gap": gap,
+        "cmap": gentle_binary_cmap
     }
 
     petal_style = {
@@ -81,7 +84,7 @@ for i, (dataset_name, dataset_getter) in enumerate(zip(DATASET_NAMES, DATASET_GE
         "zorder": 2,
         "marker_start": "^",
         "marker_end": "3",
-        "linewidth": 1,
+        "linewidth": 1.8,
         "opacity": .95,
     }
 
@@ -90,12 +93,12 @@ for i, (dataset_name, dataset_getter) in enumerate(zip(DATASET_NAMES, DATASET_GE
         "linewidth": 3,
     }
 
-    figsize = (12, 19)
-    fig, axes = plt.subplots(5, 3, figsize=figsize);
+    figsize = (18, 6)
+    fig, axes = plt.subplots(1, 4, figsize=figsize);
     axes = axes.flatten()
     plt.suptitle("Lilypond visuals of Cardio dataset", fontsize=16, y=0.99)
 
-    ## 1. row: Distance information and BMU pairs
+    ## Distance information and BMU pairs
 
     pond1 = basin.pond() \
         .set_coloring_strategy(coloring_strategy) \
@@ -107,79 +110,28 @@ for i, (dataset_name, dataset_getter) in enumerate(zip(DATASET_NAMES, DATASET_GE
         .style_rhizome(**rhizome_style);
     
     ax = axes[0]
-    pond1.set_coloring_strategy(strategy="uniform") \
+    pond1.clean_attract() \
         .see_rhizome(mode="all", ax=ax) \
         .observe(return_fig=True, ax=ax,
                  title="All BMU pairs");
-
-    ax = axes[1]
-    pond1.set_coloring_strategy(coloring_strategy) \
-        .style_petal(**{**petal_style, "hide": False, "width": 1.5, "size_base": .4}) \
-        .see_rhizome(mode="all", ax=ax) \
-        .observe(return_fig=True, ax=ax,
-                 title="All BMU pairs + Activations");
     
-    ax = axes[2]
-    pond1.set_coloring_strategy(coloring_strategy) \
-        .style_petal(**petal_style) \
-        .style_rhizome(**rhizome_style_bold) \
-        .see_rhizome(mode="violating", ax=ax) \
-        .observe(return_fig=True, ax=ax,
-                 title="Violating BMU pairs");
-    
-
     # Projections of a group with their BMU pairs
 
     pad_style = {
         **pad_style,
-        "cmap": "binary",
+        "cmap": gentle_binary_cmap,
     }
         
     attract_style = {
         "color": "black",
         "zorder": 21,
         "marker": ".",
-        "size_base": 75,
+        "size_base": 300,
         "opacity": .9,
         "subsample_ratio": None,
     }
-
-    ## 2. row: Historical normal
-
-    attract_style = {**attract_style, "color": "darkorange"}
-
-    pond2 = basin.pond() \
-        .set_coloring_strategy(coloring_strategy) \
-        .flood(below_activations=0) \
-        .style_pad(**pad_style) \
-        .style_petal(**petal_style) \
-        .style_flood(underwater_opacity=.4) \
-        .style_rhizome(**rhizome_style);
     
-    ax = axes[3]
-    pond2.clean_attract() \
-        .attract(Xs_hist_normal, **attract_style) \
-        .observe(return_fig=True, ax=ax,
-                 title="Historical normal samples");
-    
-    
-    ax = axes[4]
-    pond2.clean_attract() \
-        .see_rhizome(Xs_hist_normal, mode="all", ax=ax) \
-        .attract(Xs_hist_normal, **attract_style) \
-        .observe(return_fig=True, ax=ax,
-                 title="Hist. normal samples (All BMU pairs)");
-    
-    ax = axes[5]
-    pond2.clean_attract() \
-        .style_rhizome(**rhizome_style_bold) \
-        .see_rhizome(Xs_hist_normal, mode="violating", ax=ax) \
-        .attract(Xs_hist_normal, **attract_style) \
-        .observe(return_fig=True, ax=ax,
-                 title="Hist. normal samples (Violating BMU pairs)");
-    
-
-    ## 3. row: Historical suspect
+    ## Historical suspect
 
     attract_style = {**attract_style, "color": "tomato"}
 
@@ -191,28 +143,14 @@ for i, (dataset_name, dataset_getter) in enumerate(zip(DATASET_NAMES, DATASET_GE
         .style_flood(underwater_opacity=.4) \
         .style_rhizome(**rhizome_style);
     
-    ax = axes[6]
-    pond3.clean_attract() \
-        .attract(Xs_hist_suspect, **attract_style) \
-        .observe(return_fig=True, ax=ax,
-                 title="Historical suspect samples");
-    
-    ax = axes[7]
+    ax = axes[1]
     pond3.clean_attract() \
         .see_rhizome(Xs_hist_suspect, mode="all", ax=ax) \
         .attract(Xs_hist_suspect, **attract_style) \
         .observe(return_fig=True, ax=ax,
                  title="Hist. suspect samples (All BMU pairs)");
     
-    ax = axes[8]
-    pond3.clean_attract() \
-        .style_rhizome(**rhizome_style_bold) \
-        .see_rhizome(Xs_hist_suspect, mode="violating", ax=ax) \
-        .attract(Xs_hist_suspect, **attract_style) \
-        .observe(return_fig=True, ax=ax,
-                 title="Hist. suspect samples (Violating BMU pairs)");
-
-    # 4. row: Historical abnormal
+    # Historical abnormal
 
     attract_style = {**attract_style, "color": "orangered"}
 
@@ -224,28 +162,14 @@ for i, (dataset_name, dataset_getter) in enumerate(zip(DATASET_NAMES, DATASET_GE
         .style_flood(underwater_opacity=.4) \
         .style_rhizome(**rhizome_style);
     
-    ax = axes[9]
-    pond4.clean_attract() \
-        .attract(Xs_hist_abnormal, **attract_style) \
-        .observe(return_fig=True, ax=ax,
-                 title="Historical abnormal samples");
-    
-    ax = axes[10]
+    ax = axes[2]
     pond4.clean_attract() \
         .see_rhizome(Xs_hist_abnormal, mode="all", ax=ax) \
         .attract(Xs_hist_abnormal, **attract_style) \
         .observe(return_fig=True, ax=ax,
                  title="Hist. abnormal samples (All BMU pairs)");
     
-    ax = axes[11]
-    pond4.clean_attract() \
-        .style_rhizome(**rhizome_style_bold) \
-        .see_rhizome(Xs_hist_abnormal, mode="violating", ax=ax) \
-        .attract(Xs_hist_abnormal, **attract_style) \
-        .observe(return_fig=True, ax=ax,
-                 title="Hist. abnormal samples (Violating BMU pairs)");
-
-    # 5. row: New abnormal
+    # New abnormal
 
     attract_style = {**attract_style, "color": "magenta"}
 
@@ -257,35 +181,22 @@ for i, (dataset_name, dataset_getter) in enumerate(zip(DATASET_NAMES, DATASET_GE
         .style_flood(underwater_opacity=.4) \
         .style_rhizome(**rhizome_style);
     
-    ax = axes[12]
-    pond5.clean_attract() \
-        .attract(Xs_holdout_abnormal, **attract_style) \
-        .observe(return_fig=True, ax=ax,
-                 title="New abnormal samples");
-    
-    ax = axes[13]
+    ax = axes[3]
     pond5.clean_attract() \
         .see_rhizome(Xs_holdout_abnormal, mode="all", ax=ax) \
         .attract(Xs_holdout_abnormal, **attract_style) \
         .observe(return_fig=True, ax=ax,
                  title="New abnormal samples (All BMU pairs)");
-    
-    ax = axes[14]
-    pond5.clean_attract() \
-        .style_rhizome(**rhizome_style_bold) \
-        .see_rhizome(Xs_holdout_abnormal, mode="violating", ax=ax) \
-        .attract(Xs_holdout_abnormal, **attract_style) \
-        .observe(return_fig=True, ax=ax,
-                 title="New abnormal samples (Violating BMU pairs)");
-    
 
     for ax in axes:
         ax.set_aspect('equal')
         ax.axis("off")
 
-    # plt.suptitle("Rhizome layer denoting edges between $1st$ and $2nd$ BMUs of the data points")
     plt.tight_layout()
+    export_figure(fig, EXPORTS_DIR, f"04_{dataset_name}_lilypond_01_titled.png", hide_titles=False)
+    export_figure(fig, EXPORTS_DIR, f"04_{dataset_name}_lilypond_01.png", hide_titles=True)
 
-    # export fig
-    export_figure(fig, EXPORTS_DIR, f"04_{dataset_name}_lilypond_01.png", hide_titles=False)
-    
+
+    # export basin
+    import pickle
+    pickle.dump(basin, open(f"{BASE_DIR}/experiments/_exports/basin_{dataset_name}.pkl", "wb"))
